@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Level 1</title>
+  <style>
+    body {
+      background-color: black;
+      color: lime;
+      font-family: monospace;
+      text-align: center;
+      padding-top: 50px;
+    }
+
+    .box {
+      border: 2px solid lime;
+      display: inline-block;
+      padding: 20px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+      box-shadow: 0 0 15px lime;
+    }
+
+    input, button {
+      margin-top: 15px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 16px;
+      background-color: black;
+      color: lime;
+      border: 1px solid lime;
+    }
+
+    button:hover {
+      background-color: lime;
+      color: black;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>█ LEVEL 1 : ACCESS CHECK █</h1>
+
+  <div class="box">
+╔══════════════════════════════╗
+║      SYSTEM CHALLENGE       ║
+╠══════════════════════════════╣
+║ I have keys,                ║
+║ but no locks.               ║
+║ I have space,               ║
+║ but no room.                ║
+║ You can enter,              ║
+║ but you can't go outside.   ║
+║                             ║
+║ What am I?                  ║
+╚══════════════════════════════╝
+  </div>
+
+  <p>Enter your answer:</p>
+  <input type="text" id="answer" placeholder="Type here">
+  <br>
+  <button onclick="checkAnswer()">VERIFY</button>
+
+  <p id="result"></p>
+  <button id="nextButton" style="display:none;" onclick="goNext()">NEXT LEVEL</button>
+
+  <script>
+    function checkAnswer() {
+      const answer = document.getElementById("answer").value.toLowerCase().trim();
+      const result = document.getElementById("result");
+      const nextButton = document.getElementById("nextButton");
+
+      if (
+        answer === "keyboard" ||
+        answer === "a keyboard" ||
+        answer === "computer keyboard"
+      ) {
+        result.textContent = "ACCESS GRANTED";
+        nextButton.style.display = "inline-block";
+      } else {
+        result.textContent = "ACCESS DENIED - TRY AGAIN";
+      }
+    }
+
+    function goNext() {
+      window.location.href = "level2.html?access=yes";
+    }
+  </script>
+
+</body>
+</html>

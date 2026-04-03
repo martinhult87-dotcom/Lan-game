@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Level 3</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      color: lime;
+      font-family: monospace;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .terminal {
+      width: 80%;
+      max-width: 900px;
+      min-height: 500px;
+      border: 2px solid lime;
+      box-shadow: 0 0 20px lime;
+      padding: 25px;
+      background: black;
+    }
+
+    #output {
+      white-space: pre-wrap;
+      line-height: 1.8;
+      min-height: 300px;
+    }
+
+    .input-line {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .prompt {
+      margin-right: 10px;
+      display: inline-block;
+      min-width: 40px;
+    }
+
+    input {
+      background: black;
+      color: lime;
+      border: none;
+      border-bottom: 1px solid lime;
+      font-family: monospace;
+      font-size: 18px;
+      outline: none;
+      width: 320px;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 8px 14px;
+      background: black;
+      color: lime;
+      border: 1px solid lime;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: lime;
+      color: black;
+    }
+
+    #result {
+      margin-top: 20px;
+      min-height: 30px;
+      white-space: pre-wrap;
+    }
+
+    #nextButton {
+      display: none;
+      margin-top: 20px;
+      box-shadow: 0 0 10px lime;
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+    <div id="output"></div>
+
+    <div class="input-line" id="inputLine">
+      <span class="prompt" id="promptText">D:/></span>
+      <input type="text" id="commandInput" autocomplete="off">
+      <button onclick="checkCommand()">ENTER</button>
+    </div>
+
+    <div id="result"></div>
+
+    <button id="nextButton" onclick="goNext()">NEXT LEVEL</button>
+  </div>
+
+  <script>
+    const output = document.getElementById("output");
+    const inputLine = document.getElementById("inputLine");
+    const commandInput = document.getElementById("commandInput");
+    const result = document.getElementById("result");
+    const nextButton = document.getElementById("nextButton");
+    const promptText = document.getElementById("promptText");
+
+    let stage = 1;
+    let currentDrive = "D:/";
+
+    const lines = [
+      "D:/> connecting to server...",
+      "D:/> connection established",
+      "D:/> access restricted",
+      "D:/> trying to access C:\\",
+      "D:/> command hint: opposite of lock",
+      "D:/> type command:"
+    ];
+
+    let lineIndex = 0;
+    let charIndex = 0;
+
+    function typeLine() {
+      if (lineIndex < lines.length) {
+        const currentLine = lines[lineIndex];
+
+        if (charIndex < currentLine.length) {
+          output.textContent += currentLine.charAt(charIndex);
+          charIndex++;
+          setTimeout(typeLine, 35);
+        } else {
+          output.textContent += "\n";
+          lineIndex++;
+          charIndex = 0;
+          setTimeout(typeLine, 250);
+        }
+      } else {
+        inputLine.style.display = "block";
+        commandInput.focus();
+      }
+    }
+
+    function appendOutput(text) {
+      output.textContent += text + "\n";
+    }
+
+    function updatePrompt() {
+      promptText.textContent = currentDrive + ">";
+    }
+
+    function normalizeCommand(text) {
+      return text.trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function matchesAny(command, allowedCommands) {
+      return allowedCommands.includes(command);
+    }
+
+    function checkCommand() {
+      const rawCommand = commandInput.value.trim();
+      const command = normalizeCommand(rawCommand);
+
+      if (rawCommand === "") {
+        result.textContent = "NO COMMAND DETECTED";
+        return;
+      }
+
+      if (stage === 1) {
+        const allowedStage1 = [
+          "unlock",
+          "cd unlock"
+        ];
+
+        if (matchesAny(command, allowedStage1)) {
+          appendOutput("D:/> " + rawCommand);
+          appendOutput("D:/> unlocking...");
+          appendOutput("D:/> access granted");
+          appendOutput("D:/> trying to access C:\\");
+          appendOutput("D:/> error: access denied");
+          appendOutput("D:/> enter disk path:");
+
+          result.textContent = "";
+          commandInput.value = "";
+          stage = 2;
+        } else {
+          result.textContent = "ACCESS DENIED\nHint: opposite of lock";
+        }
+
+      } else if (stage === 2) {
+        const allowedStage2 = [
+          "c:/",
+          "c:\\",
+          "cd c:/",
+          "cd c:\\"
+        ];
+
+        if (matchesAny(command, allowedStage2)) {
+          appendOutput("D:/> " + rawCommand);
+          appendOutput("D:/> switching drive...");
+          appendOutput("C:/> drive changed");
+          appendOutput("C:/> file found: next_level.txt");
+          appendOutput("C:/> type file command:");
+
+          currentDrive = "C:/";
+          updatePrompt();
+
+          result.textContent = "";
+          commandInput.value = "";
+          stage = 3;
+        } else {
+          result.textContent = "DISK ERROR\nHint: trying to access C:";
+        }
+
+      } else if (stage === 3) {
+        const allowedStage3 = [
+          "next level",
+          "cd next level",
+          "next_level",
+          "cd next_level"
+        ];
+
+        if (matchesAny(command, allowedStage3)) {
+          appendOutput("C:/> " + rawCommand);
+          appendOutput("C:/> opening file...");
+          appendOutput("C:/> file opened");
+          appendOutput("C:/> access complete");
+
+          result.textContent = "ACCESS GRANTED";
+          nextButton.style.display = "inline-block";
+          commandInput.disabled = true;
+        } else {
+          result.textContent = "FILE ERROR\nHint: file name = next_level";
+        }
+      }
+    }
+
+    function goNext() {
+      window.location.href = "level4.html";
+    }
+
+    commandInput.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        checkCommand();
+      }
+    });
+
+    updatePrompt();
+    typeLine();
+  </script>
+</body>
+</html>

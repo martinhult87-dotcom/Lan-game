@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Nivå</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      color: lime;
+      font-family: monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .box {
+      border: 2px solid lime;
+      padding: 30px;
+      box-shadow: 0 0 20px lime;
+      max-width: 600px;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    .equation {
+      font-size: 42px;
+      margin: 30px 0;
+      text-shadow: 0 0 10px lime;
+    }
+
+    input {
+      margin-top: 20px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 18px;
+      background: black;
+      color: lime;
+      border: 1px solid lime;
+      text-align: center;
+      width: 250px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      background: black;
+      color: lime;
+      border: 1px solid lime;
+      cursor: pointer;
+      font-family: monospace;
+    }
+
+    button:hover {
+      background: lime;
+      color: black;
+    }
+
+    #result {
+      margin-top: 20px;
+      min-height: 24px;
+    }
+
+    #nextButton {
+      display: none;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>█ NIVÅ : LEVEL 7 █</h1>
+
+    <p>Skriv ekvationen.</p>
+
+    <div class="equation">8 × 31</div>
+
+    <input type="text" id="answer" placeholder="Skriv här">
+    <br>
+    <button onclick="checkAnswer()">VERIFIERA</button>
+
+    <div id="result"></div>
+    <button id="nextButton" onclick="goNext()">NÄSTA NIVÅ</button>
+  </div>
+
+  <script>
+    function checkAnswer() {
+      const answer = document.getElementById("answer").value.trim().toLowerCase();
+      const result = document.getElementById("result");
+      const nextButton = document.getElementById("nextButton");
+
+      if (answer === "ekvationen") {
+        result.textContent = "RÄTT SVAR";
+        nextButton.style.display = "inline-block";
+      } else {
+        result.textContent = "FEL SVAR";
+      }
+    }
+
+    function goNext() {
+      window.location.href = "level8.html";
+    }
+  </script>
+</body>
+</html>

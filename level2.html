@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Level 2</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: monospace;
+      cursor: none;
+    }
+
+    #gameCanvas {
+      display: block;
+      background: black;
+    }
+
+    #messageBox {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: lime;
+      font-size: 2rem;
+      text-shadow: 0 0 10px lime;
+      opacity: 0;
+      transition: 0.4s;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    #inputArea {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      text-align: center;
+    }
+
+    input, button {
+      padding: 10px;
+      font-family: monospace;
+      background: black;
+      color: lime;
+      border: 1px solid lime;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: lime;
+      color: black;
+      cursor: pointer;
+    }
+
+    #result {
+      color: lime;
+      margin-top: 10px;
+    }
+
+    #nextButton {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="messageBox">Write "Hello"</div>
+
+  <div id="inputArea">
+    <input type="text" id="answer" placeholder="Type here">
+    <button onclick="checkAnswer()">VERIFY</button>
+    <div id="result"></div>
+    <button id="nextButton" onclick="goNext()">NEXT LEVEL</button>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("access") !== "yes") {
+      window.location.href = "index.html";
+    }
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const messageBox = document.getElementById("messageBox");
+    const inputArea = document.getElementById("inputArea");
+    const result = document.getElementById("result");
+    const nextButton = document.getElementById("nextButton");
+
+    let mouseX = -100;
+    let mouseY = -100;
+
+    let started = false;
+    let completed = false;
+    let visitedPoints = [];
+
+    // Sparar de 2 senaste misslyckade försöken
+    let failedAttempts = [];
+
+    const baseWidth = 1600;
+    const baseHeight = 900;
+
+    const basePath = [
+      { x: 100, y: 500 },
+      { x: 300, y: 500 },
+      { x: 450, y: 350 },
+      { x: 600, y: 650 },
+      { x: 800, y: 620 },
+      { x: 950, y: 350 },
+      { x: 1200, y: 420 },
+      { x: 1400, y: 450 }
+    ];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drawScene();
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function getScaledPath() {
+      return basePath.map(point => ({
+        x: point.x * canvas.width / baseWidth,
+        y: point.y * canvas.height / baseHeight
+      }));
+    }
+
+    function distance(x1, y1, x2, y2) {
+      return Math.hypot(x2 - x1, y2 - y1);
+    }
+
+    function distanceToSegment(px, py, x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+
+      if (dx === 0 && dy === 0) {
+        return distance(px, py, x1, y1);
+      }
+
+      const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)));
+      const closestX = x1 + t * dx;
+      const closestY = y1 + t * dy;
+
+      return distance(px, py, closestX, closestY);
+    }
+
+    function isNearStart(x, y, path) {
+      return distance(x, y, path[0].x, path[0].y) < 90;
+    }
+
+    function isNearPath(x, y, path, maxDistance) {
+      for (let i = 0; i < path.length - 1; i++) {
+        const p1 = path[i];
+        const p2 = path[i + 1];
+        const d = distanceToSegment(x, y, p1.x, p1.y, p2.x, p2.y);
+
+        if (d <= maxDistance) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function drawCursor(visible, strongGlow) {
+      if (!visible) return;
+
+      const glowRadius = strongGlow ? 24 : 10;
+      const glowAlpha = strongGlow ? 0.35 : 0.10;
+
+      ctx.save();
+
+      ctx.beginPath();
+      ctx.arc(mouseX, mouseY, glowRadius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,255,0,${glowAlpha})`;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(mouseX, mouseY, strongGlow ? 11 : 7, 0, Math.PI * 2);
+      ctx.strokeStyle = "lime";
+      ctx.lineWidth = strongGlow ? 3 : 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(mouseX - 9, mouseY);
+      ctx.lineTo(mouseX + 9, mouseY);
+      ctx.moveTo(mouseX, mouseY - 9);
+      ctx.lineTo(mouseX, mouseY + 9);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawTrail(points, color, shadowColor, lineWidth = 8, shadowBlur = 18) {
+      if (!points || points.length < 2) return;
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowBlur = shadowBlur;
+      ctx.shadowColor = shadowColor;
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawFailedAttempts() {
+      if (failedAttempts.length === 0) return;
+
+      // Äldsta av de två = orange
+      if (failedAttempts[0]) {
+        drawTrail(
+          failedAttempts[0],
+          "rgba(255,165,0,0.75)",
+          "rgba(255,165,0,0.6)",
+          6,
+          10
+        );
+      }
+
+      // Senaste misslyckandet = rött
+      if (failedAttempts[1]) {
+        drawTrail(
+          failedAttempts[1],
+          "rgba(255,60,60,0.85)",
+          "rgba(255,60,60,0.75)",
+          7,
+          12
+        );
+      }
+    }
+
+    function drawProgress() {
+      drawTrail(visitedPoints, "lime", "lime", 8, 18);
+    }
+
+    function resetLevel(saveAttempt = false) {
+      if (saveAttempt && visitedPoints.length > 1) {
+        // Spara en kopia av försöket
+        failedAttempts.push([...visitedPoints]);
+
+        // Behåll bara de 2 senaste
+        if (failedAttempts.length > 2) {
+          failedAttempts.shift();
+        }
+      }
+
+      started = false;
+      completed = false;
+      visitedPoints = [];
+      messageBox.style.opacity = "0";
+      inputArea.style.display = "none";
+      result.textContent = "";
+      nextButton.style.display = "none";
+    }
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const path = getScaledPath();
+      const nearStart = isNearStart(mouseX, mouseY, path);
+      const nearPathNow = isNearPath(mouseX, mouseY, path, 90);
+
+      // Rita gamla försök först
+      drawFailedAttempts();
+
+      // Rita nuvarande försök ovanpå
+      drawProgress();
+
+      const cursorVisible = nearStart || started || completed;
+      const strongGlow = nearStart || nearPathNow || started;
+
+      drawCursor(cursorVisible, strongGlow);
+    }
+
+    canvas.addEventListener("mousemove", (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      const path = getScaledPath();
+      const nearStart = isNearStart(mouseX, mouseY, path);
+
+      // Här bestämmer du hur förlåtande banan ska vara
+      const nearPathNow = isNearPath(mouseX, mouseY, path, 90);
+
+      const lastPoint = path[path.length - 1];
+
+      if (!started && nearStart) {
+        started = true;
+        visitedPoints = [{ x: mouseX, y: mouseY }];
+      }
+
+      if (started && !completed) {
+        if (nearPathNow) {
+          const lastVisited = visitedPoints[visitedPoints.length - 1];
+
+          if (!lastVisited || distance(mouseX, mouseY, lastVisited.x, lastVisited.y) > 4) {
+            visitedPoints.push({ x: mouseX, y: mouseY });
+          }
+        } else {
+          resetLevel(true);
+        }
+
+        if (distance(mouseX, mouseY, lastPoint.x, lastPoint.y) < 55) {
+          completed = true;
+          messageBox.style.opacity = "1";
+          inputArea.style.display = "block";
+        }
+      }
+
+      drawScene();
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      mouseX = -100;
+      mouseY = -100;
+      drawScene();
+    });
+
+    function checkAnswer() {
+      const answer = document.getElementById("answer").value.toLowerCase().trim();
+
+      if (answer === "hello") {
+        result.textContent = "ACCESS GRANTED";
+        nextButton.style.display = "inline-block";
+      } else {
+        result.textContent = "ACCESS DENIED";
+      }
+    }
+
+    function goNext() {
+      window.location.href = "level3.html";
+    }
+
+    drawScene();
+  </script>
+</body>
+</html>

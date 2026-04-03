@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Level 6</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: lime;
+      font-family: monospace;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .content {
+      text-align: center;
+      z-index: 1;
+    }
+
+    h1 {
+      text-shadow: 0 0 10px lime;
+      margin-bottom: 20px;
+    }
+
+    p {
+      margin-bottom: 30px;
+    }
+
+    #realButton {
+      padding: 14px 22px;
+      background: black;
+      color: lime;
+      border: 2px solid lime;
+      font-family: monospace;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 0 15px lime;
+    }
+
+    #realButton:hover {
+      background: lime;
+      color: black;
+    }
+
+    /* 🔥 Overlay som blockerar */
+    .layer-block {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.98);
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px;
+      box-sizing: border-box;
+    }
+
+    .box {
+      border: 2px solid lime;
+      padding: 30px;
+      box-shadow: 0 0 20px lime;
+      max-width: 700px;
+    }
+
+    .hint {
+      margin-top: 20px;
+      color: #1a1a1a;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="content">
+    <h1>█ LEVEL 6 : HIDDEN ACCESS █</h1>
+    <p>The next button exists.<br>But something is covering it.</p>
+
+    <button id="realButton" onclick="goNext()">NEXT LEVEL</button>
+  </div>
+
+  <!-- 🔥 DETTA ÄR DET SOM DE SKA TA BORT -->
+  <div class="layer-block">
+    <div class="box">
+      <h2>ACCESS BLOCKED</h2>
+      <p>Layer protection active.</p>
+      <p>No interaction possible.</p>
+
+      <div class="hint">
+        hint: inspect the page structure
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goNext() {
+      window.location.href = "level7.html";
+    }
+  </script>
+
+</body>
+</html>
